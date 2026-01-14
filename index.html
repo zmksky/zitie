@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="在线字帖生成器 - 自定义文字、字体、格子样式，支持临摹和描红模式，可导出PDF或直接打印">
+    <title>字帖生成器 - 在线生成可打印的练字字帖</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+KuaiLe&family=ZCOOL+XiaoWei&family=Liu+Jian+Mao+Cao&family=Long+Cang&family=Zhi+Mang+Xing&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- 左侧控制面板 -->
+        <aside class="control-panel">
+            <header class="panel-header">
+                <h1>✒️ 字帖生成器</h1>
+                <p class="subtitle" id="visitSubtitle">这是第1次定制字帖，继续加油呀！</p>
+            </header>
+
+            <div class="controls-wrapper">
+                <!-- 打印设置 -->
+                <section class="control-section">
+                    <h2 class="section-title">🖨️ 打印设置</h2>
+                    <div class="control-group">
+                        <label for="pageCount">打印张数: <span id="pageCountValue">1</span></label>
+                        <input type="range" id="pageCount" min="1" max="10" value="1">
+                    </div>
+                </section>
+
+                <!-- 文本输入 -->
+                <section class="control-section">
+                    <h2 class="section-title">📝 字帖内容</h2>
+                    <div class="control-group">
+                        <label for="textInput">输入文字</label>
+                        <textarea id="textInput" placeholder="请输入要练习的文字..." rows="3">天地玄黄宇宙洪荒日月盈昃辰宿列张</textarea>
+                    </div>
+                    <div class="btn-row">
+                        <button id="removePunctuationBtn" class="btn btn-secondary btn-small">
+                            <span>✂️</span> 去标点
+                        </button>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="contentLibrary">内容类型</label>
+                        <select id="contentLibrary">
+                            <option value="random" selected>🎲 随机选择（所有类型）</option>
+                            <optgroup label="唐诗">
+                                <option value="tang-wujue">五言绝句</option>
+                                <option value="tang-qijue">七言绝句</option>
+                                <option value="tang-wulv">五言律诗</option>
+                                <option value="tang-qilv">七言律诗</option>
+                                <option value="tang-misc">其他唐诗</option>
+                            </optgroup>
+                            <optgroup label="宋词">
+                                <option value="song-ci">经典宋词</option>
+                                <option value="song-misc">其他宋词</option>
+                            </optgroup>
+                            <optgroup label="元曲">
+                                <option value="yuan-qu">元曲精选</option>
+                            </optgroup>
+                            <optgroup label="历代诗词">
+                                <option value="qin-shi">秦代诗</option>
+                                <option value="han-shi">汉代诗</option>
+                                <option value="sanguo-shi">三国诗</option>
+                                <option value="jin-shi">晋代诗</option>
+                                <option value="nanbei-shi">南北朝诗</option>
+                                <option value="sui-shi">隋代诗</option>
+                                <option value="wudai-shi">五代十国诗</option>
+                                <option value="ming-shi">明代诗</option>
+                                <option value="qing-shi">清代诗</option>
+                            </optgroup>
+                            <optgroup label="古文经典">
+                                <option value="qianziwen">千字文</option>
+                                <option value="sanzijing">三字经</option>
+                                <option value="dizigui">弟子规</option>
+                                <option value="lunyu">论语精选</option>
+                                <option value="shijing">诗经选</option>
+                                <option value="chuci">楚辞选</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="randomCharCount">随机生成字数: <span id="randomCharCountValue">自动填满</span></label>
+                        <input type="range" id="randomCharCount" min="0" max="200" value="0">
+                        <small class="hint">0 = 自动填满整页</small>
+                    </div>
+                    <button id="randomTextBtn" class="btn btn-secondary">
+                        <span>🎲</span> 随机生成
+                    </button>
+                </section>
+
+                <!-- 布局设置 -->
+                <section class="control-section">
+                    <h2 class="section-title">📐 布局设置</h2>
+                    <div class="control-group">
+                        <label for="charsPerLine">每行字数: <span id="charsPerLineValue">17</span></label>
+                        <input type="range" id="charsPerLine" min="1" max="20" value="17">
+                    </div>
+                    <div class="control-group">
+                        <label for="fontSize">字体大小: <span id="fontSizeValue">25</span>px</label>
+                        <input type="range" id="fontSize" min="20" max="100" value="25">
+                    </div>
+                </section>
+
+                <!-- 字体设置 -->
+                <section class="control-section">
+                    <h2 class="section-title">🔤 字体设置</h2>
+                    <div class="control-group">
+                        <label for="fontFamily">选择字体</label>
+                        <select id="fontFamily">
+                            <optgroup label="免费书法字体" id="webFontsGroup">
+                                <option value="Ma Shan Zheng">马善政楷书</option>
+                                <option value="ZCOOL XiaoWei">站酷小薇体</option>
+                                <option value="ZCOOL KuaiLe">站酷快乐体</option>
+                                <option value="Liu Jian Mao Cao">刘建毛草</option>
+                                <option value="Long Cang">龙藏体</option>
+                                <option value="Zhi Mang Xing">志芒行书</option>
+                            </optgroup>
+                            <optgroup label="自定义字体" id="customFontsGroup">
+                                <!-- 用户上传的字体 -->
+                            </optgroup>
+                            <optgroup label="本地字体" id="localFontsGroup">
+                                <!-- 本地字体将由JavaScript动态填充 -->
+                            </optgroup>
+                        </select>
+                        <div class="btn-row" style="margin-top: 0.5rem;">
+                            <button id="refreshFontsBtn" class="btn btn-secondary btn-small">
+                                <span>🔄</span> 刷新本地字体
+                            </button>
+                            <label for="fontUpload" class="btn btn-secondary btn-small" style="cursor: pointer;">
+                                <span>📁</span> 上传字体
+                            </label>
+                            <input type="file" id="fontUpload" accept=".ttf,.otf,.woff,.woff2" multiple
+                                style="display: none;">
+                        </div>
+                        <p class="hint-text" style="font-size: 0.75rem; color: #888; margin-top: 0.25rem;">支持 .ttf .otf
+                            .woff .woff2 格式</p>
+                    </div>
+                </section>
+
+                <!-- 文字样式 -->
+                <section class="control-section">
+                    <h2 class="section-title">🎨 文字样式</h2>
+                    <div class="control-row">
+                        <div class="control-group half">
+                            <label for="textColor">文字颜色</label>
+                            <input type="color" id="textColor" value="#000000">
+                        </div>
+                        <div class="control-group half">
+                            <label for="textOpacity">透明度: <span id="textOpacityValue">100</span>%</label>
+                            <input type="range" id="textOpacity" min="0" max="100" value="100">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 格子样式 -->
+                <section class="control-section">
+                    <h2 class="section-title">📦 格子样式</h2>
+                    <div class="control-group">
+                        <label for="gridStyle">格子类型</label>
+                        <div class="grid-style-options">
+                            <label class="radio-card">
+                                <input type="radio" name="gridStyle" value="border" checked>
+                                <span class="radio-visual">
+                                    <svg viewBox="0 0 40 40" class="grid-icon">
+                                        <rect x="2" y="2" width="36" height="36" fill="none" stroke="currentColor"
+                                            stroke-width="2" />
+                                    </svg>
+                                    <span>边框</span>
+                                </span>
+                            </label>
+                            <label class="radio-card">
+                                <input type="radio" name="gridStyle" value="tian">
+                                <span class="radio-visual">
+                                    <svg viewBox="0 0 40 40" class="grid-icon">
+                                        <rect x="2" y="2" width="36" height="36" fill="none" stroke="currentColor"
+                                            stroke-width="2" />
+                                        <line x1="20" y1="2" x2="20" y2="38" stroke="currentColor" stroke-width="1"
+                                            stroke-dasharray="2,2" />
+                                        <line x1="2" y1="20" x2="38" y2="20" stroke="currentColor" stroke-width="1"
+                                            stroke-dasharray="2,2" />
+                                    </svg>
+                                    <span>田字格</span>
+                                </span>
+                            </label>
+                            <label class="radio-card">
+                                <input type="radio" name="gridStyle" value="mi">
+                                <span class="radio-visual">
+                                    <svg viewBox="0 0 40 40" class="grid-icon">
+                                        <rect x="2" y="2" width="36" height="36" fill="none" stroke="currentColor"
+                                            stroke-width="2" />
+                                        <line x1="20" y1="2" x2="20" y2="38" stroke="currentColor" stroke-width="1"
+                                            stroke-dasharray="2,2" />
+                                        <line x1="2" y1="20" x2="38" y2="20" stroke="currentColor" stroke-width="1"
+                                            stroke-dasharray="2,2" />
+                                        <line x1="2" y1="2" x2="38" y2="38" stroke="currentColor" stroke-width="1"
+                                            stroke-dasharray="2,2" />
+                                        <line x1="38" y1="2" x2="2" y2="38" stroke="currentColor" stroke-width="1"
+                                            stroke-dasharray="2,2" />
+                                    </svg>
+                                    <span>米字格</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-group half">
+                            <label for="gridColor">格子颜色</label>
+                            <input type="color" id="gridColor" value="#ff0000">
+                        </div>
+                        <div class="control-group half">
+                            <label for="gridOpacity">透明度: <span id="gridOpacityValue">100</span>%</label>
+                            <input type="range" id="gridOpacity" min="0" max="100" value="100">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 模式设置 -->
+                <section class="control-section">
+                    <h2 class="section-title">📋 练习模式</h2>
+                    <div class="control-group">
+                        <div class="mode-toggle">
+                            <label class="toggle-option">
+                                <input type="radio" name="practiceMode" value="trace" checked>
+                                <span class="toggle-label">
+                                    <strong>临摹模式</strong>
+                                    <small>一行文字，一行空白</small>
+                                </span>
+                            </label>
+                            <label class="toggle-option">
+                                <input type="radio" name="practiceMode" value="copy">
+                                <span class="toggle-label">
+                                    <strong>描红模式</strong>
+                                    <small>全部显示文字</small>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="action-buttons">
+                <button id="printBtn" class="btn btn-success">
+                    <span>🖨️</span> 打印
+                </button>
+            </div>
+        </aside>
+
+        <!-- 右侧预览区域 -->
+        <main class="preview-area">
+            <div class="preview-header">
+                <h2>预览</h2>
+                <span class="preview-info">A4纸张 (210mm × 297mm)</span>
+            </div>
+            <div class="preview-container" id="previewContainer">
+                <!-- 预览页面将由JavaScript生成 -->
+            </div>
+        </main>
+    </div>
+
+    <!-- 烟花动画层 -->
+    <canvas id="fireworkCanvas"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; display: none;"></canvas>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
