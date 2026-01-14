@@ -294,7 +294,7 @@ function initVisitCounter() {
 
     const subtitleEl = document.getElementById('visitSubtitle');
     if (subtitleEl) {
-        subtitleEl.textContent = `这是第${visitCount}次定制字帖，继续加油呀！`;
+        subtitleEl.textContent = `这是大家第${visitCount}次定制字帖，一起加油呀！`;
     }
     console.log(`访问次数: ${visitCount}`);
 }
