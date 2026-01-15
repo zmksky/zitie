@@ -1014,11 +1014,20 @@ function printSheet() {
     const dateTime = getFormattedDateTime();
     const originalTitle = document.title;
     document.title = `这是打印的第${printCount}个字帖_${dateTime}`;
-    window.print();
-    setTimeout(() => {
+
+    // 使用 afterprint 事件确保烟花在打印完成后才显示
+    const handleAfterPrint = () => {
         document.title = originalTitle;
-        showFirework();
-    }, 500);
+        // 延迟一点触发烟花，确保页面已完全恢复
+        setTimeout(() => {
+            showFirework();
+        }, 300);
+        // 移除事件监听器，避免重复触发
+        window.removeEventListener('afterprint', handleAfterPrint);
+    };
+
+    window.addEventListener('afterprint', handleAfterPrint);
+    window.print();
 }
 
 // 更新显示值
