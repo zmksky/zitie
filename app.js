@@ -261,9 +261,8 @@ const elements = {
     textInput: document.getElementById('textInput'),
     removePunctuationBtn: document.getElementById('removePunctuationBtn'),
     contentLibrary: document.getElementById('contentLibrary'),
-    randomCharCount: document.getElementById('randomCharCount'),
-    randomCharCountValue: document.getElementById('randomCharCountValue'),
-    randomTextBtn: document.getElementById('randomTextBtn'),
+    randomLibraryBtn: document.getElementById('randomLibraryBtn'),
+    randomCharBtn: document.getElementById('randomCharBtn'),
     charsPerLine: document.getElementById('charsPerLine'),
     charsPerLineValue: document.getElementById('charsPerLineValue'),
     fontSize: document.getElementById('fontSize'),
@@ -748,8 +747,8 @@ function renderPreview() {
     });
 }
 
-// 智能随机生成
-function generateRandomText() {
+// 诗词库随机生成
+function generateLibraryText() {
     const selectedCategory = elements.contentLibrary.value;
 
     let texts = [];
@@ -768,7 +767,40 @@ function generateRandomText() {
         const randomText = getRandomItem(texts);
         elements.textInput.value = randomText;
         renderPreview();
+        autoSaveSettings();
     }
+}
+
+// 完全随机生成汉字（使用常用汉字表，避免生僻字）
+function generateRandomChineseText() {
+    const config = getConfig();
+    const layout = calculateLayout(config);
+
+    // 计算需要多少字符填满所有页面
+    const isTraceMode = config.practiceMode === 'trace';
+    const rowsPerPage = layout.rowsPerPage;
+
+    let textRowsNeeded;
+    if (isTraceMode) {
+        textRowsNeeded = Math.floor(rowsPerPage / 2) * config.pageCount;
+    } else {
+        textRowsNeeded = rowsPerPage * config.pageCount;
+    }
+
+    const totalCharsNeeded = textRowsNeeded * config.charsPerLine;
+
+    // 常用汉字表（约3500个常用字，覆盖日常99%用字）
+    const commonChars = '的一是不了在人有我他这个们中来上大为和国地到以说时要就出会可也你对生能而子那得于着下自之年过发后作里用道行所然家种事成方多经么去法学如都同现当没动面起看定天分还进好小部其些主样理心她本前开但因只从想实日军者意无力它与长把机十民第公此已工使情明性知全三又关点正业外将两高间由问很最重并物手应战向头文体政美相见被利什二等产或新己制身果加西斯月话合回特代内信表化老给世位次度门任常先海通教儿原东声提立及比员解水名真论处走义各入几口认条平系气题活尔更别打女变四神总何电数安少报才结反受目太量再感建务做接必场件计管期市直德资命山金指克许统区保至队形社便空决治展马科司五基眼书非则听白却界达光放强即像难且权思王象完设式色路记南品住告类求据程北边死张该交规万取拉格望觉术领共确传师观清今切院让识候带导争运笑飞风步改收根干造言联持组每济车亲极林服快办议往元英士证近失转夫令准布始怎呢存未远叫台单影具罗字爱击流备兵连调深商算质团集百需价花党华城石级整府离况亚请技际约首示企细复病息究线似官火断精满支视消越器容照须九增研写称企独热怀落照吃双怕座百叶另景装谈守格须周送节故域左识器响议似医确围呀旧号照查案例章站拿半器消突断济压周青商准调具船值顾旅委破城呀显落景静宜威派层索课刘晚顿球院微息座盘临护亿危展述练奇注杀呼够黄抓药继雷播临护降仅修既紧架拥歌额顶夏烈积省遍永套仍套彩透堆谁托刚固益降临阳院威版章获批压止深注微脱略释况底似烧险判叶愿伯顿谢迫伸速岁洲模招善围沉湖乡倒刻庭阿顺赶顾倒审托派洲致握伸紧辩胜刺盛街纪忽怀旁诉欧雨';
+
+    let randomChars = '';
+    for (let i = 0; i < totalCharsNeeded; i++) {
+        const randomIndex = Math.floor(Math.random() * commonChars.length);
+        randomChars += commonChars[randomIndex];
+    }
+
+    elements.textInput.value = randomChars;
+    renderPreview();
+    autoSaveSettings();
 }
 
 // ========== 烟花动画系统 ==========
@@ -931,22 +963,31 @@ class Firework {
         const text = '恭喜你，无限进步！';
         const centerX = this.canvas.width / 2;
         const centerY = this.canvas.height / 2;
+
+        // 响应式字体大小：根据屏幕宽度调整
+        const isMobile = this.canvas.width < 600;
+        const fontSize = isMobile ? Math.max(32, this.canvas.width / 12) : 96;
+        const lineWidth = isMobile ? 3 : 6;
+        const shadowBlur1 = isMobile ? 20 : 40;
+        const shadowBlur2 = isMobile ? 10 : 20;
+        const shadowBlur3 = isMobile ? 8 : 15;
+
         ctx.save();
-        ctx.font = 'bold 96px "Microsoft YaHei", sans-serif';
+        ctx.font = `bold ${fontSize}px "Microsoft YaHei", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        // 金色发光边框效果（增强）
+        // 金色发光边框效果
         ctx.shadowColor = 'rgba(255, 215, 0, 1)';
-        ctx.shadowBlur = 40;
+        ctx.shadowBlur = shadowBlur1;
         ctx.strokeStyle = '#FFD700';
-        ctx.lineWidth = 6;
+        ctx.lineWidth = lineWidth;
         ctx.strokeText(text, centerX, centerY);
         // 再画一层金边
-        ctx.shadowBlur = 20;
+        ctx.shadowBlur = shadowBlur2;
         ctx.strokeText(text, centerX, centerY);
         // 白色填充文字
         ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = shadowBlur3;
         ctx.fillStyle = '#FFFFFF';
         ctx.fillText(text, centerX, centerY);
         ctx.restore();
@@ -987,17 +1028,14 @@ function updateDisplayValues() {
     elements.textOpacityValue.textContent = elements.textOpacity.value;
     elements.gridOpacityValue.textContent = elements.gridOpacity.value;
     elements.pageCountValue.textContent = elements.pageCount.value;
-
-    const charCount = parseInt(elements.randomCharCount.value);
-    elements.randomCharCountValue.textContent = charCount === 0 ? '自动填满' : charCount;
 }
 
 // 初始化事件
 function initEventListeners() {
     elements.removePunctuationBtn.addEventListener('click', removePunctuation);
 
-    elements.randomCharCount.addEventListener('input', updateDisplayValues);
-    elements.randomTextBtn.addEventListener('click', generateRandomText);
+    elements.randomLibraryBtn.addEventListener('click', generateLibraryText);
+    elements.randomCharBtn.addEventListener('click', generateRandomChineseText);
     elements.refreshFontsBtn.addEventListener('click', detectLocalFonts);
     elements.fontUpload.addEventListener('change', handleFontUpload);
 

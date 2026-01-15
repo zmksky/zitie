@@ -490,20 +490,141 @@ input[type="color"] {
         position: relative;
         border-right: none;
         border-bottom: 1px solid var(--border-color);
+        max-height: none;
+    }
+
+    .controls-wrapper {
+        max-height: 60vh;
+        overflow-y: auto;
     }
 
     .preview-area {
         margin-left: 0;
+        padding: 1rem;
+        overflow-x: auto;
     }
 
     .app-container {
         flex-direction: column;
     }
 
-    .preview-page {
+    .preview-container {
         width: 100%;
-        min-height: auto;
-        aspect-ratio: 210 / 297;
+        align-items: flex-start;
+    }
+
+    /* A4预览缩放适配 - 保持原始布局，使用缩放 */
+    .preview-page {
+        width: 210mm;
+        min-height: 297mm;
+        padding: 15mm;
+        transform-origin: top left;
+        transform: scale(calc((100vw - 2rem) / 210mm));
+        margin-bottom: calc(-297mm * (1 - calc((100vw - 2rem) / 210mm)));
+    }
+
+    .preview-header h2 {
+        font-size: 1rem;
+    }
+
+    .preview-info {
+        font-size: 0.75rem;
+    }
+}
+
+/* Mobile specific */
+@media (max-width: 600px) {
+    html {
+        font-size: 13px;
+    }
+
+    .panel-header {
+        padding: 1rem;
+    }
+
+    .panel-header h1 {
+        font-size: 1.25rem;
+    }
+
+    .controls-wrapper {
+        padding: 0.75rem;
+        max-height: 50vh;
+    }
+
+    .control-section {
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .section-title {
+        font-size: 0.8rem;
+    }
+
+    .btn-row {
+        flex-wrap: wrap;
+    }
+
+    .btn-small {
+        flex: 1;
+        min-width: 45%;
+    }
+
+    .grid-style-options {
+        flex-wrap: wrap;
+    }
+
+    .radio-card {
+        min-width: 30%;
+    }
+
+    .control-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .action-buttons {
+        padding: 0.75rem;
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+    }
+
+    .preview-area {
+        padding: 0.5rem;
+    }
+
+    .preview-header {
+        flex-direction: column;
+        gap: 0.25rem;
+        align-items: flex-start;
+    }
+
+    /* Touch-friendly inputs */
+    input[type="range"] {
+        height: 8px;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+        width: 24px;
+        height: 24px;
+    }
+
+    select,
+    textarea {
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+        padding: 0.75rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    /* Improve button touch target */
+    .btn-small {
+        padding: 0.5rem 0.75rem;
+        min-height: 40px;
     }
 }
 

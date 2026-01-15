@@ -87,25 +87,29 @@
                     </div>
 
                     <div class="control-group">
-                        <label for="randomCharCount">随机生成字数: <span id="randomCharCountValue">自动填满</span></label>
-                        <input type="range" id="randomCharCount" min="0" max="200" value="0">
-                        <small class="hint">0 = 自动填满整页</small>
+                        <label>随机生成模式</label>
+                        <div class="btn-row">
+                            <button id="randomLibraryBtn" class="btn btn-secondary btn-small">
+                                <span>📚</span> 诗词库随机
+                            </button>
+                            <button id="randomCharBtn" class="btn btn-secondary btn-small">
+                                <span>🔤</span> 完全随机
+                            </button>
+                        </div>
+                        <small class="hint">完全随机：随机汉字填满整页</small>
                     </div>
-                    <button id="randomTextBtn" class="btn btn-secondary">
-                        <span>🎲</span> 随机生成
-                    </button>
                 </section>
 
                 <!-- 布局设置 -->
                 <section class="control-section">
                     <h2 class="section-title">📐 布局设置</h2>
                     <div class="control-group">
-                        <label for="charsPerLine">每行字数: <span id="charsPerLineValue">17</span></label>
-                        <input type="range" id="charsPerLine" min="1" max="20" value="17">
+                        <label for="charsPerLine">每行字数: <span id="charsPerLineValue">15</span></label>
+                        <input type="range" id="charsPerLine" min="1" max="20" value="15">
                     </div>
                     <div class="control-group">
-                        <label for="fontSize">字体大小: <span id="fontSizeValue">25</span>px</label>
-                        <input type="range" id="fontSize" min="20" max="100" value="25">
+                        <label for="fontSize">字体大小: <span id="fontSizeValue">30</span>px</label>
+                        <input type="range" id="fontSize" min="20" max="100" value="30">
                     </div>
                 </section>
 
@@ -167,7 +171,7 @@
                         <label for="gridStyle">格子类型</label>
                         <div class="grid-style-options">
                             <label class="radio-card">
-                                <input type="radio" name="gridStyle" value="border" checked>
+                                <input type="radio" name="gridStyle" value="border">
                                 <span class="radio-visual">
                                     <svg viewBox="0 0 40 40" class="grid-icon">
                                         <rect x="2" y="2" width="36" height="36" fill="none" stroke="currentColor"
@@ -177,7 +181,7 @@
                                 </span>
                             </label>
                             <label class="radio-card">
-                                <input type="radio" name="gridStyle" value="tian">
+                                <input type="radio" name="gridStyle" value="tian" checked>
                                 <span class="radio-visual">
                                     <svg viewBox="0 0 40 40" class="grid-icon">
                                         <rect x="2" y="2" width="36" height="36" fill="none" stroke="currentColor"
