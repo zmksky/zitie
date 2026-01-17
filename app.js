@@ -1095,24 +1095,72 @@ async function printSheet() {
     updateSerialDisplay(serial);
 
     // 使用 afterprint 事件确保烟花在打印完成后才显示
-    const handleAfterPrint = () => {
-        document.title = originalTitle;
-        // 延迟一点触发烟花，确保页面已完全恢复
-        setTimeout(() => {
-            showFirework();
-        }, 300);
-        // 移除事件监听器，避免重复触发
-        window.removeEventListener('afterprint', handleAfterPrint);
+    // 检测是否为移动端
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-        // 打印完成后，页面编号 +1，变成“下一个待打印编号”
-        const nextSerialVal = (count || 0) + 1;
-        const nextSerialStr = String(nextSerialVal).padStart(7, '0');
-        updateSerialDisplay(nextSerialStr);
-        currentPrintSerial = nextSerialStr; // 更新全局变量，确保重新渲染也是新的
-    };
+    if (isMobile) {
+        // 移动端：直接生成 PDF 并下载
+        // 显示加载提示
+        const originalBtnText = document.getElementById('printBtn').innerText;
+        document.getElementById('printBtn').innerText = '正在生成 PDF...';
 
-    window.addEventListener('afterprint', handleAfterPrint);
-    window.print();
+        // 准备打印内容 (克隆节点以避免影响当前显示)
+        const element = document.querySelector('.preview-page');
+        // 注意：目前只支持单页，如果有多页需要遍历 .preview-page
+
+        const opt = {
+            margin: 0,
+            filename: `字帖_${count}_${dateTime}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        try {
+            // 这里我们可能需要处理多页的情况，暂时先只打当前预览的内容
+            // 如果有多页，最好是用 .preview-container
+            // 但 .preview-container 在移动端是 flex column，需要特殊处理
+
+            // 为了稳妥，我们打印整个 .preview-container，html2pdf 会自动分页
+            const content = document.querySelector('.preview-container');
+
+            await html2pdf().set(opt).from(content).save();
+
+            // 生成完成后，执行后续逻辑
+            setTimeout(() => {
+                document.getElementById('printBtn').innerText = originalBtnText;
+                showFirework(); // 烟花奖励
+
+                // 编号 +1 逻辑
+                const nextSerialVal = (count || 0) + 1;
+                const nextSerialStr = String(nextSerialVal).padStart(7, '0');
+                updateSerialDisplay(nextSerialStr);
+                currentPrintSerial = nextSerialStr;
+            }, 1000);
+        } catch (err) {
+            console.error('PDF生成失败:', err);
+            alert('PDF 生成失败，请重试');
+            document.getElementById('printBtn').innerText = originalBtnText;
+        }
+
+    } else {
+        // PC端：使用系统打印
+        const handleAfterPrint = () => {
+            document.title = originalTitle;
+            setTimeout(() => {
+                showFirework();
+            }, 300);
+            window.removeEventListener('afterprint', handleAfterPrint);
+
+            const nextSerialVal = (count || 0) + 1;
+            const nextSerialStr = String(nextSerialVal).padStart(7, '0');
+            updateSerialDisplay(nextSerialStr);
+            currentPrintSerial = nextSerialStr;
+        };
+
+        window.addEventListener('afterprint', handleAfterPrint);
+        window.print();
+    }
 }
 
 // 更新页脚编号显示
