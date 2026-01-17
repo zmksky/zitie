@@ -285,29 +285,82 @@ const elements = {
 // 自定义字体计数器
 let customFontCounter = 0;
 
-// 访问次数计数器
-function initVisitCounter() {
-    let visitCount = parseInt(localStorage.getItem('visitCount') || '0');
-    visitCount++;
-    localStorage.setItem('visitCount', visitCount.toString());
+// ========== 阿里云函数计算API ==========
+const API_BASE_URL = 'https://zitiejishu-poivhtlizy.cn-hangzhou.fcapp.run';
 
+// 当前打印编号（全局）
+let currentPrintSerial = '0000000';
+
+// 访问次数计数器（使用云端API）
+async function initVisitCounter() {
     const subtitleEl = document.getElementById('visitSubtitle');
-    if (subtitleEl) {
-        subtitleEl.textContent = `这是大家第${visitCount}次定制字帖，一起加油呀！`;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/visit`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+        const visitCount = data.count || 1;
+
+        if (subtitleEl) {
+            subtitleEl.textContent = `这是大家第${visitCount}次定制字帖，一起加油呀！`;
+        }
+        console.log(`全局访问次数: ${visitCount}`);
+    } catch (error) {
+        console.error('获取访问次数失败:', error);
+        // 降级到本地计数
+        let visitCount = parseInt(localStorage.getItem('visitCount') || '0');
+        visitCount++;
+        localStorage.setItem('visitCount', visitCount.toString());
+        if (subtitleEl) {
+            subtitleEl.textContent = `这是大家第${visitCount}次定制字帖，一起加油呀！`;
+        }
     }
-    console.log(`访问次数: ${visitCount}`);
 }
 
-// 打印次数计数器
-function getPrintCount() {
-    return parseInt(localStorage.getItem('printCount') || '0');
+// 获取当前打印编号
+async function fetchCurrentPrintSerial() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/print`, {
+            method: 'GET'
+        });
+        const data = await response.json();
+        currentPrintSerial = data.serial || '0000000';
+        console.log('获取到当前编号:', currentPrintSerial);
+        return currentPrintSerial;
+    } catch (error) {
+        console.error('获取打印编号失败:', error);
+        const printCount = parseInt(localStorage.getItem('printCount') || '0');
+        currentPrintSerial = String(printCount).padStart(7, '0');
+        return currentPrintSerial;
+    }
 }
 
-function incrementPrintCount() {
-    let printCount = getPrintCount();
-    printCount++;
-    localStorage.setItem('printCount', printCount.toString());
-    return printCount;
+// 递增打印编号并返回新编号
+async function incrementPrintSerial() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/print`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+        currentPrintSerial = data.serial || '0000001';
+        return { count: data.count, serial: currentPrintSerial };
+    } catch (error) {
+        console.error('递增打印编号失败:', error);
+        // 降级到本地计数
+        let printCount = parseInt(localStorage.getItem('printCount') || '0');
+        printCount++;
+        localStorage.setItem('printCount', printCount.toString());
+        currentPrintSerial = String(printCount).padStart(7, '0');
+        return { count: printCount, serial: currentPrintSerial };
+    }
+}
+
+// 检查编号最后两位是否相同（幸运编号）
+function isLuckySerial(serial) {
+    if (serial.length < 2) return false;
+    const lastTwo = serial.slice(-2);
+    return lastTwo[0] === lastTwo[1];
 }
 
 // 获取当前时间格式化字符串
@@ -742,7 +795,19 @@ function renderPreview() {
             contentEl.appendChild(rowEl);
         });
 
+        // 添加页脚编号
+        const footerEl = document.createElement('div');
+        footerEl.className = 'page-footer';
+        const serialEl = document.createElement('span');
+        serialEl.className = 'page-serial-number';
+        serialEl.textContent = `NO ${currentPrintSerial}`;
+        if (isLuckySerial(currentPrintSerial)) {
+            serialEl.classList.add('lucky-serial');
+        }
+        footerEl.appendChild(serialEl);
+
         pageEl.appendChild(contentEl);
+        pageEl.appendChild(footerEl);
         elements.previewContainer.appendChild(pageEl);
     });
 }
@@ -1009,11 +1074,15 @@ function showFirework() {
 }
 
 // 打印
-function printSheet() {
-    const printCount = incrementPrintCount();
+async function printSheet() {
+    // 递增打印编号（云端API）
+    const { count, serial } = await incrementPrintSerial();
     const dateTime = getFormattedDateTime();
     const originalTitle = document.title;
-    document.title = `这是打印的第${printCount}个字帖_${dateTime}`;
+    document.title = `这是打印的第${count}个字帖_${dateTime}`;
+
+    // 更新页脚编号显示
+    updateSerialDisplay(serial);
 
     // 使用 afterprint 事件确保烟花在打印完成后才显示
     const handleAfterPrint = () => {
@@ -1028,6 +1097,21 @@ function printSheet() {
 
     window.addEventListener('afterprint', handleAfterPrint);
     window.print();
+}
+
+// 更新页脚编号显示
+function updateSerialDisplay(serial) {
+    const serialElements = document.querySelectorAll('.page-serial-number');
+    const isLucky = isLuckySerial(serial);
+
+    serialElements.forEach(el => {
+        el.textContent = `NO ${serial}`;
+        if (isLucky) {
+            el.classList.add('lucky-serial');
+        } else {
+            el.classList.remove('lucky-serial');
+        }
+    });
 }
 
 // 更新显示值
@@ -1078,9 +1162,12 @@ function initEventListeners() {
 }
 
 // 初始化
-function init() {
+async function init() {
     // 更新访问次数
     initVisitCounter();
+
+    // 获取当前打印编号（从云端）
+    await fetchCurrentPrintSerial();
 
     // 先加载上次保存的设置
     autoLoadSettings();

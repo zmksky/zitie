@@ -437,6 +437,28 @@ input[type="color"] {
     height: 100%;
 }
 
+/* ===== Page Footer ===== */
+.page-footer {
+    position: absolute;
+    bottom: 8mm;
+    left: 15mm;
+    right: 15mm;
+    text-align: center;
+    font-size: 10px;
+    color: #999;
+}
+
+.page-serial-number {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+}
+
+.page-serial-number.lucky-serial {
+    color: #FFD700;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+}
+
 /* ===== Print Styles ===== */
 @media print {
     @page {
@@ -451,7 +473,9 @@ input[type="color"] {
     }
 
     .control-panel,
-    .preview-header {
+    .preview-header,
+    canvas,
+    #fireworkCanvas {
         display: none !important;
     }
 
@@ -466,6 +490,8 @@ input[type="color"] {
     }
 
     .preview-container {
+        display: block;
+        /* Disable flex to prevent print layout issues */
         gap: 0;
     }
 
@@ -473,18 +499,27 @@ input[type="color"] {
         box-shadow: none;
         border-radius: 0;
         page-break-after: always;
-        margin: 0;
+        page-break-inside: avoid;
+        margin: 0 auto;
+        padding: 15mm;
         width: 210mm;
+        height: 297mm;
         min-height: 297mm;
+        max-height: 297mm;
+        overflow: hidden;
+        box-sizing: border-box;
+        transform: none !important;
+        /* Ensure no mobile scaling applies */
     }
 
     .preview-page:last-child {
-        page-break-after: auto;
+        page-break-after: avoid;
     }
 }
 
 /* ===== Responsive ===== */
-@media (max-width: 900px) {
+/* ===== Responsive ===== */
+@media screen and (max-width: 900px) {
     .control-panel {
         width: 100%;
         position: relative;
@@ -533,7 +568,8 @@ input[type="color"] {
 }
 
 /* Mobile specific */
-@media (max-width: 600px) {
+/* Mobile specific */
+@media screen and (max-width: 600px) {
     html {
         font-size: 13px;
     }
