@@ -296,10 +296,17 @@ async function initVisitCounter() {
     const subtitleEl = document.getElementById('visitSubtitle');
 
     try {
-        const response = await fetch(`${API_BASE_URL}/visit`, {
+        const response = await fetch(`${API_BASE_URL}?action=visit`, {
             method: 'POST'
         });
         const data = await response.json();
+        console.log('【后端返回数据】(访问):', data); // Debug log
+
+        // 如果后端报错，data里可能有error字段
+        if (data.error) {
+            console.error('【后端报错】:', data.error);
+        }
+
         const visitCount = data.count || 1;
 
         if (subtitleEl) {
@@ -321,12 +328,15 @@ async function initVisitCounter() {
 // 获取当前打印编号
 async function fetchCurrentPrintSerial() {
     try {
-        const response = await fetch(`${API_BASE_URL}/print`, {
+        const response = await fetch(`${API_BASE_URL}?action=print_view`, {
             method: 'GET'
         });
         const data = await response.json();
-        currentPrintSerial = data.serial || '0000000';
-        console.log('获取到当前编号:', currentPrintSerial);
+        // 页面初始化时，展示“下一个即将生成的编号”（即当前数据库值 + 1）
+        // 这样用户看到的预览就是他打印时真正会得到的编号
+        const nextSerialVal = (data.count || 0) + 1;
+        currentPrintSerial = String(nextSerialVal).padStart(7, '0');
+        console.log('获取到当前编号(预览Next):', currentPrintSerial);
         return currentPrintSerial;
     } catch (error) {
         console.error('获取打印编号失败:', error);
@@ -339,7 +349,7 @@ async function fetchCurrentPrintSerial() {
 // 递增打印编号并返回新编号
 async function incrementPrintSerial() {
     try {
-        const response = await fetch(`${API_BASE_URL}/print`, {
+        const response = await fetch(`${API_BASE_URL}?action=print`, {
             method: 'POST'
         });
         const data = await response.json();
@@ -1093,6 +1103,12 @@ async function printSheet() {
         }, 300);
         // 移除事件监听器，避免重复触发
         window.removeEventListener('afterprint', handleAfterPrint);
+
+        // 打印完成后，页面编号 +1，变成“下一个待打印编号”
+        const nextSerialVal = (count || 0) + 1;
+        const nextSerialStr = String(nextSerialVal).padStart(7, '0');
+        updateSerialDisplay(nextSerialStr);
+        currentPrintSerial = nextSerialStr; // 更新全局变量，确保重新渲染也是新的
     };
 
     window.addEventListener('afterprint', handleAfterPrint);
