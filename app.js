@@ -1104,33 +1104,32 @@ async function printSheet() {
         // 1. 立即更新UI，给用户反馈
         const originalBtnText = document.getElementById('printBtn').innerText;
         document.getElementById('printBtn').innerText = '正在生成 PDF...';
-        document.getElementById('printBtn').disabled = true; // 防止重复点击
+        document.getElementById('printBtn').disabled = true;
 
-        // 使用 setTimeout 让 UI 有机会重绘，避免界面卡死导致文字没变
+        // 使用 setTimeout 让 UI 有机会重绘
         setTimeout(async () => {
             try {
-                // 2. 准备打印内容：克隆节点以避免影响当前显示，并去除移动端的缩放
-                // 我们直接找 .preview-page，因为它就是标准的 A4 尺寸
+                // 2. 准备打印内容
                 const sourceElement = document.querySelector('.preview-page');
                 if (!sourceElement) throw new Error('找不到字帖内容');
 
-                // 克隆
+                // 克隆并重置样式
                 const clone = sourceElement.cloneNode(true);
 
-                // 3. 强行重置克隆节点的样式，确保它是标准的 A4，没有任何缩放
-                // 这一点对修复“内容不全”至关重要
+                // 关键修正：不要移出屏幕太远，否则 html2canvas 可能不渲染
+                // 而是放在 (0,0) 但层级最低，被当前内容遮住
                 clone.style.transform = 'none';
                 clone.style.margin = '0';
                 clone.style.position = 'absolute';
-                clone.style.top = '-9999px'; // 移出可视区域
+                clone.style.top = '0';
                 clone.style.left = '0';
-                clone.style.width = '210mm'; // 强制 A4 宽
-                clone.style.height = '297mm'; // 强制 A4 高
+                clone.style.width = '210mm';
+                clone.style.height = '297mm';
                 clone.style.minHeight = '297mm';
-                clone.style.zIndex = '-1';
-                clone.style.backgroundColor = 'white'; // 确保背景白
+                clone.style.zIndex = '-9999'; // 藏在最底下
+                clone.style.backgroundColor = '#ffffff'; // 必须显式白色背景
+                clone.style.visibility = 'visible'; // 必须可见
 
-                // 必须添加到 document 中才能被 html2canvas 渲染
                 document.body.appendChild(clone);
 
                 const opt = {
@@ -1140,9 +1139,12 @@ async function printSheet() {
                     html2canvas: {
                         scale: 2,
                         useCORS: true,
+                        allowTaint: true, // 允许跨域图片
                         scrollY: 0,
                         scrollX: 0,
-                        windowWidth: 794, // A4 width px approx
+                        width: 794, // A4 px width (approx)
+                        height: 1123,
+                        windowWidth: 794,
                         windowHeight: 1123
                     },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -1151,7 +1153,7 @@ async function printSheet() {
                 // 4. 生成 PDF
                 await html2pdf().set(opt).from(clone).save();
 
-                // 清理克隆节点
+                // 清理
                 document.body.removeChild(clone);
 
                 // 5. 成功后的逻辑
@@ -1160,9 +1162,8 @@ async function printSheet() {
                 setTimeout(() => {
                     document.getElementById('printBtn').innerText = originalBtnText;
                     document.getElementById('printBtn').disabled = false;
-                    showFirework(); // 烟花奖励
+                    showFirework();
 
-                    // 编号 +1 逻辑
                     const nextSerialVal = (count || 0) + 1;
                     const nextSerialStr = String(nextSerialVal).padStart(7, '0');
                     updateSerialDisplay(nextSerialStr);
@@ -1171,33 +1172,63 @@ async function printSheet() {
 
             } catch (err) {
                 console.error('PDF生成失败:', err);
-                alert('PDF 生成遇到问题: ' + err.message + '。请重试。');
+                alert('PDF 生成失败: ' + err.message);
                 document.getElementById('printBtn').innerText = originalBtnText;
                 document.getElementById('printBtn').disabled = false;
-                // 尝试清理
-                const debris = document.querySelectorAll('.preview-page[style*="-9999px"]');
+                const debris = document.querySelectorAll('.preview-page[style*="-9999"]');
                 debris.forEach(el => el.remove());
             }
         }, 50);
 
     } else {
-        // PC端：使用系统打印
-        const handleAfterPrint = () => {
-            document.title = originalTitle;
-            setTimeout(() => {
-                showFirework();
-            }, 300);
-            window.removeEventListener('afterprint', handleAfterPrint);
 
+        // 清理克隆节点
+        document.body.removeChild(clone);
+
+        // 5. 成功后的逻辑
+        document.getElementById('printBtn').innerText = '正在下载...';
+
+        setTimeout(() => {
+            document.getElementById('printBtn').innerText = originalBtnText;
+            document.getElementById('printBtn').disabled = false;
+            showFirework(); // 烟花奖励
+
+            // 编号 +1 逻辑
             const nextSerialVal = (count || 0) + 1;
             const nextSerialStr = String(nextSerialVal).padStart(7, '0');
             updateSerialDisplay(nextSerialStr);
             currentPrintSerial = nextSerialStr;
-        };
+        }, 2000);
 
-        window.addEventListener('afterprint', handleAfterPrint);
-        window.print();
+    } catch (err) {
+        console.error('PDF生成失败:', err);
+        alert('PDF 生成遇到问题: ' + err.message + '。请重试。');
+        document.getElementById('printBtn').innerText = originalBtnText;
+        document.getElementById('printBtn').disabled = false;
+        // 尝试清理
+        const debris = document.querySelectorAll('.preview-page[style*="-9999px"]');
+        debris.forEach(el => el.remove());
     }
+}, 50);
+
+    } else {
+    // PC端：使用系统打印
+    const handleAfterPrint = () => {
+        document.title = originalTitle;
+        setTimeout(() => {
+            showFirework();
+        }, 300);
+        window.removeEventListener('afterprint', handleAfterPrint);
+
+        const nextSerialVal = (count || 0) + 1;
+        const nextSerialStr = String(nextSerialVal).padStart(7, '0');
+        updateSerialDisplay(nextSerialStr);
+        currentPrintSerial = nextSerialStr;
+    };
+
+    window.addEventListener('afterprint', handleAfterPrint);
+    window.print();
+}
 }
 
 // 更新页脚编号显示
