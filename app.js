@@ -1100,48 +1100,85 @@ async function printSheet() {
 
     if (isMobile) {
         // 移动端：直接生成 PDF 并下载
-        // 显示加载提示
+
+        // 1. 立即更新UI，给用户反馈
         const originalBtnText = document.getElementById('printBtn').innerText;
         document.getElementById('printBtn').innerText = '正在生成 PDF...';
+        document.getElementById('printBtn').disabled = true; // 防止重复点击
 
-        // 准备打印内容 (克隆节点以避免影响当前显示)
-        const element = document.querySelector('.preview-page');
-        // 注意：目前只支持单页，如果有多页需要遍历 .preview-page
+        // 使用 setTimeout 让 UI 有机会重绘，避免界面卡死导致文字没变
+        setTimeout(async () => {
+            try {
+                // 2. 准备打印内容：克隆节点以避免影响当前显示，并去除移动端的缩放
+                // 我们直接找 .preview-page，因为它就是标准的 A4 尺寸
+                const sourceElement = document.querySelector('.preview-page');
+                if (!sourceElement) throw new Error('找不到字帖内容');
 
-        const opt = {
-            margin: 0,
-            filename: `字帖_${count}_${dateTime}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
+                // 克隆
+                const clone = sourceElement.cloneNode(true);
 
-        try {
-            // 这里我们可能需要处理多页的情况，暂时先只打当前预览的内容
-            // 如果有多页，最好是用 .preview-container
-            // 但 .preview-container 在移动端是 flex column，需要特殊处理
+                // 3. 强行重置克隆节点的样式，确保它是标准的 A4，没有任何缩放
+                // 这一点对修复“内容不全”至关重要
+                clone.style.transform = 'none';
+                clone.style.margin = '0';
+                clone.style.position = 'absolute';
+                clone.style.top = '-9999px'; // 移出可视区域
+                clone.style.left = '0';
+                clone.style.width = '210mm'; // 强制 A4 宽
+                clone.style.height = '297mm'; // 强制 A4 高
+                clone.style.minHeight = '297mm';
+                clone.style.zIndex = '-1';
+                clone.style.backgroundColor = 'white'; // 确保背景白
 
-            // 为了稳妥，我们打印整个 .preview-container，html2pdf 会自动分页
-            const content = document.querySelector('.preview-container');
+                // 必须添加到 document 中才能被 html2canvas 渲染
+                document.body.appendChild(clone);
 
-            await html2pdf().set(opt).from(content).save();
+                const opt = {
+                    margin: 0,
+                    filename: `字帖_${count}_${dateTime}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        scrollY: 0,
+                        scrollX: 0,
+                        windowWidth: 794, // A4 width px approx
+                        windowHeight: 1123
+                    },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
 
-            // 生成完成后，执行后续逻辑
-            setTimeout(() => {
+                // 4. 生成 PDF
+                await html2pdf().set(opt).from(clone).save();
+
+                // 清理克隆节点
+                document.body.removeChild(clone);
+
+                // 5. 成功后的逻辑
+                document.getElementById('printBtn').innerText = '正在下载...';
+
+                setTimeout(() => {
+                    document.getElementById('printBtn').innerText = originalBtnText;
+                    document.getElementById('printBtn').disabled = false;
+                    showFirework(); // 烟花奖励
+
+                    // 编号 +1 逻辑
+                    const nextSerialVal = (count || 0) + 1;
+                    const nextSerialStr = String(nextSerialVal).padStart(7, '0');
+                    updateSerialDisplay(nextSerialStr);
+                    currentPrintSerial = nextSerialStr;
+                }, 2000);
+
+            } catch (err) {
+                console.error('PDF生成失败:', err);
+                alert('PDF 生成遇到问题: ' + err.message + '。请重试。');
                 document.getElementById('printBtn').innerText = originalBtnText;
-                showFirework(); // 烟花奖励
-
-                // 编号 +1 逻辑
-                const nextSerialVal = (count || 0) + 1;
-                const nextSerialStr = String(nextSerialVal).padStart(7, '0');
-                updateSerialDisplay(nextSerialStr);
-                currentPrintSerial = nextSerialStr;
-            }, 1000);
-        } catch (err) {
-            console.error('PDF生成失败:', err);
-            alert('PDF 生成失败，请重试');
-            document.getElementById('printBtn').innerText = originalBtnText;
-        }
+                document.getElementById('printBtn').disabled = false;
+                // 尝试清理
+                const debris = document.querySelectorAll('.preview-page[style*="-9999px"]');
+                debris.forEach(el => el.remove());
+            }
+        }, 50);
 
     } else {
         // PC端：使用系统打印
